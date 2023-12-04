@@ -5,13 +5,32 @@ COPY scripts /opt/scripts
 RUN apt-get update && apt-get upgrade -y \
     # Install prerequisites
     && apt-get install --no-install-recommends -y \
+    bc \
     ca-certificates \
+    coreutils \
     curl \
+    debootstrap \
+    dosfstools \
+    file \
     git \
+    gpg \
+    grep \
     sudo \
     jq \
+    kpartx \
+    libarchive-tools \
+    libcap2-bin \
     libicu-dev \
     nano \
+    parted \
+    pigz \
+    qemu-user-static \
+    qemu-utils \
+    quilt \
+    rsync \
+    xz-utils \
+    zerofree \
+    zip \
     # Prepare .docker_config
     && mkdir /opt/.docker_config \
     && echo "true" > /opt/.docker_config/.first_run \
