@@ -7,6 +7,7 @@ RUN apt-get update && apt-get upgrade -y \
     && apt-get install -y \
     curl \
     gosu \
+    jq \
     libicu-dev \
     nano \
     # Prepare .docker_config
@@ -21,7 +22,5 @@ RUN apt-get update && apt-get upgrade -y \
 
 USER runner
 WORKDIR /home/runner
-
-# VOLUME ["/opt/iobroker"]
 
 ENTRYPOINT ["/bin/bash", "-c", "/opt/scripts/startup.sh"]

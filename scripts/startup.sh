@@ -3,44 +3,86 @@
 # bash strict mode
 set -euo pipefail
 
-# check env
-echo -n 'Checking environment variables... '
-if [[ -z "${REPO_OWNER}" ]] || [[ -z "${REPO_NAME}" ]] || [[ -z "${GH_ACCESS_TOKEN}" ]]; then
+# Reading ENV
+set +u
+repo_owner=$REPO_OWNER
+repo_name=$REPO_NAME
+gh_access_token=$GH_ACCESS_TOKEN
+runner_name=$RUNNER_NAME
+runner_group=$RUNNER_GROUP
+runner_labels=$RUNNER_LABEL
+runner_work=$RUNNER_WORK
+runner_replace=$RUNNER_REPLACE
+set -u
+
+# check required env
+echo -n 'Checking required environment variables... '
+if [ -n "$repo_owner" ] && [ -n "$repo_name" ] && [ -n "$gh_access_token" ]; then
+  echo 'Done.'
+else
   echo 'Failed!'
   echo ' '
   echo 'Something went wrong. Please check your environment variables and try again.'
   exit 1
-else
-  echo 'Done.'
 fi
 
 # request token via api
-api_url_register='https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/runners/registration-token'
-register_response=$(curl -s -L -X POST -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_ACCESS_TOKEN" -H "X-GitHub-Api-Version: 2022-11-28" $api_url_register)
+api_url_register="https://api.github.com/repos/$repo_owner/$repo_name/actions/runners/registration-token"
+register_response=$(curl -s -L -X POST -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $gh_access_token" -H "X-GitHub-Api-Version: 2022-11-28" $api_url_register)
 token=$(echo "$register_response" | jq -r '.token')
 
 # get config parameters
-config_params='--url https://github.com/$REPO_OWNER/$REPO_NAME --token $token'
+config_params="--unattended --url https://github.com/$repo_owner/$repo_name --token $token"
 
-if [[ -f /opt/.docker_config/.first_run ]]; then
-  # Install actions runner
-    mkdir actions-runner 
-    cd ./actions-runner
-    curl -o actions-runner-linux-arm64-2.311.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.311.0/actions-runner-linux-arm64-2.311.0.tar.gz
-    tar xzf ./actions-runner-linux-arm64-2.311.0.tar.gz
-    ./config.sh $config_params
+# add optional runner parameters
+
+if [ -n "$runner_name" ]; then
+  config_params="$config_params --name $runner_name"
 fi
 
-# Function for graceful shutdown by SIGTERM signal
+if [ -n "$runner_group" ]; then
+  config_params="$config_params --runnergroup $runner_group"
+fi
+
+if [ -n "$runner_labels" ]; then
+  config_params="$config_params --labels $runner_labels"
+fi
+
+if [ -n "$runner_work" ]; then
+  config_params="$config_params --work $runner_work"
+fi
+
+if [ $runner_replace == "true" ]; then
+  config_params="$config_params --replace"
+fi
+
+echo '[DEBUG] Config Paramerters: '$config_params 
+
+# Install actions runner on first run
+if [ -f /opt/.docker_config/.first_run ]; then
+  echo -n 'This is the first run of this container. Installing actions-runner...' 
+  mkdir actions-runner 
+  cd ./actions-runner
+  curl -s -o actions-runner-linux-arm64-2.311.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.311.0/actions-runner-linux-arm64-2.311.0.tar.gz
+  tar xzf ./actions-runner-linux-arm64-2.311.0.tar.gz
+  rm /opt/.docker_config/.first_run
+  echo 'Done.'
+  echo ' '
+fi
+
+# configure runner
+./config.sh $config_params
+
+# function for graceful shutdown by SIGTERM signal
 shut_down() {
   echo ' '
   echo 'Recived termination signal (SIGTERM).'
   echo 'Unregister runner... '
 
-  api_url_unregister='https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/runners/remove-token'
-  unregister_response=$(curl -s -L -X POST -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_ACCESS_TOKEN" -H "X-GitHub-Api-Version: 2022-11-28" $api_url_unregister)
+  api_url_unregister="https://api.github.com/repos/$repo_owner/$repo_name/actions/runners/remove-token"
+  unregister_response=$(curl -s -L -X POST -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $gh_access_token" -H "X-GitHub-Api-Version: 2022-11-28" $api_url_unregister)
   token=$(echo "$unregister_response" | jq -r '.token')
-  ./config.sh remove --url https://github.com/$REPO_OWNER/$REPO_NAME --token $token
+  ./config.sh remove --token $token
 
   echo -e '\nDone. Have a nice day!'
   exit
