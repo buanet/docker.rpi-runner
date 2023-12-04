@@ -18,6 +18,7 @@ RUN apt-get update && apt-get upgrade -y \
     sudo \
     jq \
     kpartx \
+    kmod \
     libarchive-tools \
     libcap2-bin \
     libicu-dev \
@@ -28,6 +29,7 @@ RUN apt-get update && apt-get upgrade -y \
     qemu-utils \
     quilt \
     rsync \
+    xxd \
     xz-utils \
     zerofree \
     zip \
