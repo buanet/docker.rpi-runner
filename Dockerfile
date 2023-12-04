@@ -52,7 +52,7 @@ RUN apt-get update && apt-get upgrade -y \
     #&& apt-get clean \
     #&& rm -rf /tmp/* /var/tmp/* /root/.cache/* /root/.npm/* /var/lib/apt/lists/*
 
-USER runner
+#USER runner
 WORKDIR /home/runner
 
 ENTRYPOINT ["/bin/bash", "-c", "/opt/scripts/startup.sh"]

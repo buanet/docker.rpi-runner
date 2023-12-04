@@ -28,9 +28,9 @@ else
 fi
 
 # check runner pass to overwrite init password
-if [ -n "$user_pass" ]; then
-  echo -e "Start123!.\n$user_pass\n$user_pass" | passwd -q runner
-fi
+#if [ -n "$user_pass" ]; then
+#  echo -e "Start123!.\n$user_pass\n$user_pass" | passwd -q runner
+#fi
 
 # request token via api
 echo -n 'Requesting token... '
