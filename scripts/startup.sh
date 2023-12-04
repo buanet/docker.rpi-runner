@@ -10,9 +10,10 @@ repo_name=$REPO_NAME
 gh_access_token=$GH_ACCESS_TOKEN
 runner_name=$RUNNER_NAME
 runner_group=$RUNNER_GROUP
-runner_labels=$RUNNER_LABEL
+runner_labels=$RUNNER_LABELS
 runner_work=$RUNNER_WORK
 runner_replace=$RUNNER_REPLACE
+user_pass=$USER_PASS
 set -u
 
 # check required env
@@ -26,16 +27,24 @@ else
   exit 1
 fi
 
+# check runner pass to overwrite init password
+if [ -n "$user_pass" ]; then
+  echo -e "Start123!.\n$user_pass\n$user_pass" | passwd -q runner
+fi
+
 # request token via api
+echo -n 'Requesting token... '
 api_url_register="https://api.github.com/repos/$repo_owner/$repo_name/actions/runners/registration-token"
 register_response=$(curl -s -L -X POST -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $gh_access_token" -H "X-GitHub-Api-Version: 2022-11-28" $api_url_register)
 token=$(echo "$register_response" | jq -r '.token')
+echo 'Done.'
 
 # get config parameters
 config_params="--unattended --url https://github.com/$repo_owner/$repo_name --token $token"
+echo '[DEBUG] Config parameters (without optional parameters): '$config_params
 
 # add optional runner parameters
-
+echo -n 'Checking optional parameters... '
 if [ -n "$runner_name" ]; then
   config_params="$config_params --name $runner_name"
 fi
@@ -55,12 +64,13 @@ fi
 if [ $runner_replace == "true" ]; then
   config_params="$config_params --replace"
 fi
+echo 'Done.'
 
-echo '[DEBUG] Config Paramerters: '$config_params 
+echo '[DEBUG] Config Paramerters (with optional parameters): '$config_params 
 
 # Install actions runner on first run
 if [ -f /opt/.docker_config/.first_run ]; then
-  echo -n 'This is the first run of this container. Installing actions-runner...' 
+  echo -n 'This is the first run of this container. Installing actions-runner... '
   mkdir actions-runner 
   cd ./actions-runner
   curl -s -o actions-runner-linux-arm64-2.311.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.311.0/actions-runner-linux-arm64-2.311.0.tar.gz

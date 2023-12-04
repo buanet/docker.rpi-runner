@@ -1,0 +1,17 @@
+version: "3"
+services:
+  rpi-runner:
+    container_name: rpi-runner
+    image: buanet/rpi-runner:latest
+    hostname: rpi-runner
+    restart: always
+    environment:
+      - 'GH_ACCESS_TOKEN=${GH_ACCESS_TOKEN}'
+      - 'REPO_OWNER=${REPO_OWNER}'
+      - 'REPO_NAME=${REPO_NAME}'
+      - 'RUNNER_NAME=${RUNNER_NAME}'
+      - 'RUNNER_GROUP=${RUNNER_GROUP}'
+      - 'RUNNER_LABELS=${RUNNER_LABELS}'
+      - 'RUNNER_WORK=${RUNNER_WORK}'
+      - 'RUNNER_REPLACE=${RUNNER_REPLACE}'
+      - 'USER_PASS=${USER_PASS}'

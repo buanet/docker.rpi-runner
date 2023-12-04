@@ -4,9 +4,11 @@ COPY scripts /opt/scripts
 
 RUN apt-get update && apt-get upgrade -y \
     # Install prerequisites
-    && apt-get install -y \
+    && apt-get install --no-install-recommends -y \
+    ca-certificates \
     curl \
-    gosu \
+    git \
+    sudo \
     jq \
     libicu-dev \
     nano \
@@ -16,9 +18,18 @@ RUN apt-get update && apt-get upgrade -y \
     # Create runner user
     && useradd -ms /bin/bash runner \
     && adduser runner runner \
-    # Set permissions ans ownership
+    && echo runner:Start123!. | chpasswd \
+    && usermod -aG sudo runner \
+    # Set permissions and ownership
     && chown -R runner:runner /opt/scripts \
-    && chmod 755 /opt/scripts/*.sh 
+    && chown -R runner:runner /opt/.docker_config \
+    && chmod 755 /opt/scripts/*.sh
+    # Clean up installation cache
+    #&& apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
+    #&& apt-get autoclean -y \
+    #&& apt-get autoremove \
+    #&& apt-get clean \
+    #&& rm -rf /tmp/* /var/tmp/* /root/.cache/* /root/.npm/* /var/lib/apt/lists/*
 
 USER runner
 WORKDIR /home/runner
