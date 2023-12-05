@@ -15,4 +15,3 @@ services:
       - 'RUNNER_WORK=${RUNNER_WORK}'
       - 'RUNNER_REPLACE=${RUNNER_REPLACE}'
       - 'USER_PASS=${USER_PASS}'
-      - 'RUNNER_ALLOW_RUNASROOT=1'
